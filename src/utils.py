@@ -4,6 +4,8 @@ import subprocess
 import sys
 from typing import Any, Callable, List, Optional, Tuple, cast
 
+from icecream import ic
+
 
 def run_prefixed_functions(
     namespace: dict[str, Any],
@@ -35,10 +37,13 @@ def run_prefixed_functions(
         except Exception as exc:  # keep going even if one function fails
             result = f"Error: {exc}"
 
-        normalized = normalize_flag(result)
-        printed_label = label if label is not None else prefix
-        print(f"Flag {printed_label} {number}: {normalized}")
-        last_flag = normalized
+        if not isinstance(result, str):
+            ic(f"Result is: {result}")
+            return result
+
+        flag = normalize_flag(result)
+        ic(f"Flag {label or prefix} {number}: {flag}")
+        last_flag = flag
 
     if copy_last and last_flag:
         copy_to_clipboard(last_flag)
@@ -56,25 +61,25 @@ def copy_to_clipboard(text: str) -> bool:
     try:
         if sys.platform == "darwin":
             subprocess.run(["pbcopy"], input=text, text=True, check=True)
-            print("[copied to clipboard]")
+            ic("[copied to clipboard]")
             return True
 
         if sys.platform.startswith("linux"):
             if shutil.which("xclip"):
                 subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)
-                print("[copied to clipboard]")
+                ic("[copied to clipboard]")
                 return True
 
             if shutil.which("xsel"):
                 subprocess.run(["xsel", "--clipboard", "--input"], input=text, text=True, check=True)
-                print("[copied to clipboard]")
+                ic("[copied to clipboard]")
                 return True
 
             return False
 
         if sys.platform.startswith("win"):
             subprocess.run(["clip"], input=text, text=True, check=True)
-            print("[copied to clipboard]")
+            ic("[copied to clipboard]")
             return True
 
     except Exception:
